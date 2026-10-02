@@ -308,6 +308,12 @@
     .fila small { max-width: 150px; }
     .tomar { flex-direction: column; align-items: flex-start; }
   }
+
+  /* WhatsApp directo, para quien prefiere hablar antes que llenar el formulario */
+  .wa-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 10px 16px; border-radius: 999px; background: #e7f8ee; color: #0f6b3a; font: 600 16px/1.2 "Fira Sans", sans-serif; text-decoration: none; border: 1.5px solid #bfe9cf; transition: background-color .2s ease, border-color .2s ease; }
+  .wa-link:hover { background: #d4f3e1; border-color: #25d366; }
+  .wa-link:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+  .wa-link svg { width: 20px; height: 20px; color: #25d366; }
 </style>
 </head>
 <body>
@@ -590,6 +596,7 @@
         <span class="eyebrow">Solicitar demo</span>
         <h2>Miralo contestando por tu negocio</h2>
         <p class="lead">Contanos qué hacés y por dónde te escriben. Te mostramos Respondelo contestando con tus datos en una llamada de 20 minutos. Sin compromiso.</p>
+        <a class="wa-link" href="https://wa.me/5491135882603?text=%C2%A1Hola%21%20Quiero%20saber%20m%C3%A1s%20de%20Respondelo." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.8-.1 1.4Z"/></svg>Prefiero hablar por WhatsApp</a>
       </div>
       <form class="demo-form" id="demo-form" novalidate>
         <div class="demo-fila">
@@ -619,7 +626,7 @@
 </section>
 
 <footer>
-  <p>Respondelo es un producto de MflowSuite. ¿Tenés un comercio? Mirá también <a href="https://recompensalo.com" target="_blank" rel="noopener">Recompensalo</a>.</p>
+  <p>Respondelo es un producto de MflowSuite. ¿Tenés un comercio? Mirá también <a href="https://recompensalo.com" target="_blank" rel="noopener">Recompensalo</a>. Escribinos por <a href="https://wa.me/5491135882603?text=%C2%A1Hola%21%20Quiero%20saber%20m%C3%A1s%20de%20Respondelo." target="_blank" rel="noopener">WhatsApp</a>.</p>
   <div class="hl-pw-wrap">
     <a href="https://mflowsuite.com/" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;" aria-label="Powered by MflowSuite">
       <div id="hl-pw-scene">
