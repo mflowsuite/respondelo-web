@@ -8,5 +8,6 @@ dominio `respondelo.app` en Cloudflare (registros A a GitHub Pages, en gris).
   `FORMULARIO.md` en el repo `recompensalo-web`.
 - Los pedidos se leen en https://respondelo-contacto.mflowsuite.workers.dev/panel
   con la clave `RESPONDELO_CONTACTOS_TOKEN` del archivo de credenciales.
+- Cada pedido llega por mail a mflowsuite@gmail.com, por Resend desde hola@mflowsuite.com.
 - La marca (logo, colores, animación) sale de `docs/marca-respondelo.md` del
   repo del chatbot.
