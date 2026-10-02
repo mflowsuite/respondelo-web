@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- El isotipo de Respondelo, sin animación (docs/marca-respondelo.md).
+       Trazo azul, relleno blanco y el último puntito en coral: se ve igual
+       sobre una pestaña clara o una oscura, sin variante por tema. -->
+  <path d="M6.5 4H17.5A4 4 0 0 1 21.5 8V13A4 4 0 0 1 17.5 17H11L6.5 20.6V17A4 4 0 0 1 2.5 13V8A4 4 0 0 1 6.5 4Z" fill="#fff" stroke="#2563EB" stroke-width="2.4" stroke-linejoin="round"/>
+  <circle cx="8" cy="10.5" r="1.7" fill="#2563EB"/>
+  <circle cx="12" cy="10.5" r="1.7" fill="#2563EB"/>
+  <circle cx="16" cy="10.5" r="1.7" fill="#FF5C28"/>
+</svg>

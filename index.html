@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Respondelo · Atención por WhatsApp con IA</title>
+<meta name="description" content="Respondelo contesta a tus clientes por WhatsApp, Instagram y tu web a cualquier hora, con lo que sabe tu negocio, y le pasa la charla a tu equipo cuando hace falta.">
+<link rel="canonical" href="https://respondelo.app/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Respondelo · Que ningún cliente se quede sin respuesta">
+<meta property="og:description" content="Atención por WhatsApp, Instagram y web con IA, y una bandeja para tu equipo.">
+<meta property="og:url" content="https://respondelo.app/">
+<meta property="og:locale" content="es_AR">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* La familia de MflowSuite (muestralo, recompensalo): Manrope 800 para la
+     marca y los títulos, azul #2563EB, coral #FF5C28 como único acento.
+     Marca: docs/marca-respondelo.md del repo del chatbot. */
+  :root {
+    --bg: #f7f8fb;
+    --card: #ffffff;
+    --ink: #0f172a;
+    --ink2: #334155;
+    --muted: #5b6474;
+    --line: #e3e7ef;
+    --blue: #2563eb;
+    --coral: #ff5c28;
+    --teal: #2f8a7c;
+    --soft-blue: #eef3ff;
+    --soft-coral: #fff1eb;
+    --soft-teal: #e8f4f1;
+    --wa: #075e54;
+    --wa-bg: #efe7dd;
+    --wa-yo: #d9fdd3;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.6 "Fira Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Manrope", system-ui, sans-serif; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  section { padding: 76px 0; }
+  .banda { background: var(--card); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .eyebrow { display: inline-block; font: 600 13px/1 "Fira Sans", sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--teal); }
+  .lead { color: var(--ink2); font-size: 19px; max-width: 640px; }
+  h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin: 12px 0 14px; text-wrap: balance; }
+
+  /* Marca: el globo con los puntitos de «escribiendo», el último en coral */
+  .marca { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; border-radius: 8px; }
+  .marca:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+  .marca svg { width: 30px; height: 30px; overflow: visible; }
+  .palabra { font: 800 24px/1 "Manrope", sans-serif; letter-spacing: -0.035em; color: var(--ink); white-space: nowrap; }
+  .palabra b { color: var(--coral); font-weight: 800; }
+  @keyframes escribe-punto { 0%, 6% { transform: translateY(0); } 9% { transform: translateY(-1.8px); } 13%, 100% { transform: translateY(0); } }
+  .escribe-punto { animation: escribe-punto 8s ease-in-out infinite; transform-box: fill-box; }
+  .escribe-punto.d2 { animation-delay: .14s; }
+  .escribe-punto.d3 { animation-delay: .28s; }
+
+  /* Barra */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+  .nav { display: flex; align-items: center; gap: 22px; }
+  .nav a { font-size: 15px; color: var(--ink2); text-decoration: none; border-radius: 6px; transition: color .2s ease; }
+  .nav a:hover { color: var(--ink); }
+  .nav a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+  /* Botones */
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 22px; border-radius: 12px; font: 600 16px/1.2 "Fira Sans", sans-serif; text-decoration: none; cursor: pointer; border: 0; transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease; }
+  .btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+  .btn-1 { background: var(--blue); color: #fff; box-shadow: 0 6px 18px rgba(37, 99, 235, .25); }
+  .btn-1:hover { background: #1d4ed8; color: #fff; }
+  .btn-2 { background: var(--card); color: var(--ink); border: 1.5px solid var(--line); }
+  .btn-2:hover { border-color: var(--ink2); }
+  .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .nav .btn { min-height: 40px; padding: 8px 16px; font-size: 15px; color: #fff; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; padding: 36px 0 64px; }
+  .hero h1 { font-size: clamp(38px, 6vw, 62px); font-weight: 800; margin: 14px 0 18px; text-wrap: balance; }
+  .hero h1 em { font-style: normal; color: var(--coral); }
+  .canales-mini { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .canales-mini span { font-size: 14px; color: var(--ink2); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+
+  /* El celular */
+  .tel { justify-self: center; width: 300px; max-width: 100%; background: #111827; border-radius: 42px; padding: 12px; box-shadow: 0 30px 60px rgba(15, 23, 42, .18); }
+  .pantalla { border-radius: 32px; overflow: hidden; background: var(--wa-bg); display: flex; flex-direction: column; height: 540px; }
+  .chat-cab { display: flex; align-items: center; gap: 10px; padding: 40px 14px 12px; background: var(--wa); color: #fff; transition: background-color .3s ease, color .3s ease; }
+  .chat-cab .av { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex-shrink: 0; }
+  .chat-cab .av svg { width: 22px; height: 22px; }
+  .chat-cab b { display: block; font: 700 15px/1.2 "Manrope", sans-serif; }
+  .chat-cab small { font-size: 12px; opacity: .85; }
+  .chat { flex: 1; overflow-y: auto; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px; scroll-behavior: smooth; }
+  .msg { max-width: 84%; padding: 7px 10px 6px; border-radius: 10px; font-size: 14px; line-height: 1.4; box-shadow: 0 1px 1px rgba(0, 0, 0, .08); position: relative; }
+  .msg time { display: block; text-align: right; font-size: 10px; color: #64748b; margin-top: 2px; }
+  .msg.yo { align-self: flex-end; background: var(--wa-yo); }
+  .msg.bot { align-self: flex-start; background: #fff; }
+  .msg.link a { color: #0b66c3; text-decoration: underline; word-break: break-all; }
+  .msg.entra { animation: entra .32s cubic-bezier(.2, 1.3, .4, 1); }
+  @keyframes entra { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+  .audio { display: flex; align-items: center; gap: 8px; min-width: 170px; }
+  .audio .play { width: 26px; height: 26px; border-radius: 50%; background: #64748b; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
+  .audio .play svg { width: 12px; height: 12px; }
+  .audio .onda { flex: 1; height: 20px; background: repeating-linear-gradient(90deg, #94a3b8 0 2px, transparent 2px 5px); -webkit-mask: linear-gradient(90deg, #000 0 100%); clip-path: polygon(0 40%, 8% 20%, 16% 55%, 24% 10%, 32% 45%, 40% 25%, 48% 60%, 56% 15%, 64% 50%, 72% 30%, 80% 55%, 88% 20%, 100% 45%, 100% 60%, 88% 80%, 80% 45%, 72% 70%, 64% 50%, 56% 85%, 48% 40%, 40% 75%, 32% 55%, 24% 90%, 16% 45%, 8% 80%, 0 60%); }
+  .audio small { font-size: 11px; color: #64748b; }
+  .escribiendo { align-self: flex-start; background: #fff; border-radius: 10px; padding: 10px 12px; display: inline-flex; gap: 4px; box-shadow: 0 1px 1px rgba(0, 0, 0, .08); }
+  .escribiendo i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); animation: rebota 1s infinite ease-in-out; }
+  .escribiendo i:nth-child(2) { animation-delay: .15s; }
+  .escribiendo i:nth-child(3) { animation-delay: .3s; background: var(--coral); }
+  @keyframes rebota { 0%, 60%, 100% { transform: translateY(0); opacity: .55; } 30% { transform: translateY(-5px); opacity: 1; } }
+  .sistema.pista { margin-top: auto; margin-bottom: auto; background: rgba(255, 255, 255, .85); color: var(--ink2); font-weight: 500; }
+  .sistema { align-self: center; font-size: 12px; font-weight: 600; color: #7c2d12; background: #ffedd5; border-radius: 8px; padding: 5px 10px; text-align: center; max-width: 92%; }
+  .chat-pie { display: flex; align-items: center; gap: 8px; padding: 8px 10px 14px; }
+  .chat-pie span { flex: 1; background: #fff; border-radius: 999px; padding: 9px 14px; font-size: 13px; color: #94a3b8; }
+  .chat-pie i { width: 36px; height: 36px; border-radius: 50%; background: var(--wa); display: grid; place-items: center; color: #fff; }
+  .chat-pie i svg { width: 16px; height: 16px; }
+  /* Pieles por canal */
+  .tel.ig .pantalla { background: #fff; }
+  .tel.ig .chat-cab { background: #fff; color: #111827; border-bottom: 1px solid #eef0f3; }
+  .tel.ig .chat-cab .av { background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7); padding: 2px; }
+  .tel.ig .chat-cab .av span { width: 100%; height: 100%; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+  .tel.ig .msg.yo { background: linear-gradient(135deg, #7c3aed, #db2777); color: #fff; }
+  .tel.ig .msg.yo time { color: rgba(255, 255, 255, .8); }
+  .tel.ig .msg.bot, .tel.ig .escribiendo { background: #efeff2; box-shadow: none; }
+  .tel.ig .chat-pie i { background: #db2777; }
+  .tel.web .pantalla { background: #f4f6fb; }
+  .tel.web .chat-cab { background: var(--blue); }
+  .tel.web .msg.yo { background: var(--blue); color: #fff; }
+  .tel.web .msg.yo time { color: rgba(255, 255, 255, .8); }
+  .tel.web .chat-pie i { background: var(--blue); }
+
+  /* Números */
+  .numeros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .num { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .num strong { display: block; font: 800 32px/1.1 "Manrope", sans-serif; color: var(--blue); }
+  .num span { display: block; margin-top: 6px; color: var(--ink2); font-size: 15px; }
+
+  /* Lo que se pierde */
+  .perdes p.lead + p.lead { margin-top: 14px; }
+  .perdes .remate { font-weight: 600; color: var(--ink); }
+  .reloj { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
+  .reloj div { border-radius: 16px; padding: 20px; border: 1px solid var(--line); background: var(--bg); }
+  .reloj b { display: block; font: 800 22px/1.2 "Manrope", sans-serif; margin-bottom: 6px; }
+  .reloj span { color: var(--ink2); font-size: 15px; }
+  .reloj .mal b { color: #c2410c; }
+  .reloj .bien { background: var(--soft-teal); border-color: #bfe0d8; }
+  .reloj .bien b { color: var(--teal); }
+
+  /* La demo */
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; margin-top: 30px; }
+  .control h3 { font-size: 15px; font-weight: 800; margin: 0 0 10px; color: var(--ink2); }
+  .control + .control { margin-top: 24px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: 500 15px/1.2 "Fira Sans", sans-serif; color: var(--ink2); background: var(--card); border: 1.5px solid var(--line); border-radius: 999px; padding: 9px 14px; cursor: pointer; transition: border-color .2s ease, background-color .2s ease, color .2s ease, opacity .2s ease; }
+  .chip:hover { border-color: var(--blue); color: var(--ink); }
+  .chip:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .chip[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .preguntas { display: grid; gap: 10px; }
+  .pregunta { text-align: left; font: 500 16px/1.35 "Fira Sans", sans-serif; color: var(--ink); background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 13px 16px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; align-items: center; transition: border-color .2s ease, box-shadow .2s ease, opacity .2s ease; }
+  .pregunta:hover { border-color: var(--blue); box-shadow: 0 8px 18px rgba(37, 99, 235, .1); }
+  .pregunta:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .pregunta small { font-size: 12px; color: var(--teal); font-weight: 600; white-space: nowrap; }
+  .pregunta[disabled] { opacity: .45; cursor: default; box-shadow: none; border-color: var(--line); }
+  .reiniciar { margin-top: 14px; background: none; border: 0; color: var(--blue); font: 600 15px "Fira Sans", sans-serif; cursor: pointer; text-decoration: underline; padding: 4px 0; }
+  .que-paso { margin-top: 16px; min-height: 52px; font-size: 15px; color: var(--ink2); background: var(--soft-blue); border: 1px solid #c9d8fb; border-radius: 14px; padding: 12px 14px; }
+  .que-paso:empty { display: none; }
+  .que-paso b { color: var(--ink); }
+
+  /* Funciones */
+  .grilla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 32px; }
+  .ben { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; transition: box-shadow .2s ease, border-color .2s ease; }
+  .ben:hover { border-color: #cfd6e3; box-shadow: 0 10px 24px rgba(15, 23, 42, .06); }
+  .ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 14px; }
+  .ico svg { width: 22px; height: 22px; }
+  .ico.azul { background: var(--soft-blue); color: var(--blue); }
+  .ico.coral { background: var(--soft-coral); color: var(--coral); }
+  .ico.verde { background: var(--soft-teal); color: var(--teal); }
+  .ben h3 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+  .ben p { color: var(--ink2); font-size: 16px; }
+
+  /* La bandeja */
+  .dos { display: grid; grid-template-columns: 1fr 1.1fr; gap: 44px; align-items: center; }
+  .lista { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 14px; }
+  .lista li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; color: var(--ink2); }
+  .lista svg { width: 22px; height: 22px; color: var(--teal); margin-top: 2px; }
+  .bandeja { background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 20px 44px rgba(15, 23, 42, .08); overflow: hidden; }
+  .bandeja-cab { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--muted); flex-wrap: wrap; }
+  .bandeja-cab span { padding: 5px 10px; border-radius: 999px; background: var(--bg); }
+  .bandeja-cab span.on { background: var(--ink); color: #fff; }
+  .fila { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+  .fila:last-child { border-bottom: 0; }
+  .fila .canal { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #fff; }
+  .fila .canal svg { width: 18px; height: 18px; }
+  .c-wa { background: #25d366; } .c-ig { background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7); } .c-web { background: var(--blue); } .c-mail { background: #64748b; }
+  .fila b { display: block; font-size: 15px; }
+  .fila small { display: block; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .estado { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+  .e-bot { background: var(--soft-blue); color: var(--blue); }
+  .e-esp { background: #ffedd5; color: #c2410c; }
+  .e-hum { background: var(--soft-teal); color: var(--teal); }
+  .fila.destacada { background: #fffaf5; }
+  .tomar { margin: 0 16px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--ink); color: #fff; border-radius: 14px; padding: 12px 14px; font-size: 14px; }
+  .tomar b { background: #fff; color: var(--ink); border-radius: 10px; padding: 7px 12px; font-size: 14px; white-space: nowrap; }
+
+  /* Canales */
+  .canales { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 30px; }
+  .canal-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .canal-card .canal { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; margin-bottom: 12px; }
+  .canal-card .canal svg { width: 20px; height: 20px; }
+  .canal-card b { display: block; font: 800 17px/1.2 "Manrope", sans-serif; margin-bottom: 4px; }
+  .canal-card span { color: var(--ink2); font-size: 15px; }
+  .c-voz { background: var(--coral); }
+
+  /* Confianza */
+  .confia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 32px; }
+
+  /* Preguntas frecuentes */
+  .faq { margin-top: 28px; display: grid; gap: 10px; max-width: 820px; }
+  .faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 0 18px; }
+  .faq summary { cursor: pointer; list-style: none; padding: 16px 0; font: 700 17px/1.35 "Manrope", sans-serif; display: flex; justify-content: space-between; gap: 12px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; color: var(--blue); font-size: 22px; line-height: 1; transition: transform .2s ease; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
+  .faq details p { padding: 0 0 16px; color: var(--ink2); }
+
+  /* Pasos */
+  .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 32px; }
+  .paso { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; }
+  .paso b { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: #fff; font: 800 16px/1 "Manrope", sans-serif; margin-bottom: 14px; }
+  .paso h3 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+  .paso p { color: var(--ink2); font-size: 16px; }
+
+  /* El formulario de demo */
+  .demo-f { margin-top: 28px; display: grid; gap: 22px; scroll-margin-top: 24px; }
+  .demo-form, .demo-ok { background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 36px 40px; box-shadow: 0 24px 50px rgba(15, 23, 42, .07); }
+  .demo-form { display: grid; gap: 20px; }
+  .demo-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; }
+  .campo { display: grid; gap: 8px; }
+  .campo > span { font: 700 16px/1.2 "Manrope", sans-serif; color: var(--ink); }
+  .campo em { font: 400 15px "Fira Sans", sans-serif; color: var(--muted); font-style: normal; }
+  .campo input, .campo textarea { width: 100%; font: 400 17px/1.4 "Fira Sans", sans-serif; color: var(--ink); background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px 18px; transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease; }
+  .campo textarea { resize: vertical; min-height: 130px; }
+  .campo input::placeholder, .campo textarea::placeholder { color: #94a3b8; }
+  .campo input:focus, .campo textarea:focus { outline: none; background: #fff; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(37, 99, 235, .15); }
+  .campo .mal { border-color: #dc2626; background: #fef2f2; }
+  .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .demo-error { color: #b91c1c; font-weight: 600; font-size: 15px; }
+  .demo-acciones { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .demo-boton { min-height: 56px; padding: 14px 30px; border-radius: 999px; font-size: 18px; }
+  .demo-boton svg { transition: transform .2s ease; }
+  .demo-boton:hover svg { transform: translateX(3px); }
+  .demo-boton[disabled] { opacity: .7; cursor: progress; }
+  .demo-fino { color: var(--muted); font-size: 16px; }
+  .demo-ok { text-align: center; display: grid; justify-items: center; gap: 8px; }
+  .demo-ok[hidden], .demo-form[hidden] { display: none; }
+  .demo-ok-ico { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--soft-teal); color: var(--teal); margin-bottom: 6px; }
+  .demo-ok-ico svg { width: 28px; height: 28px; }
+  .demo-ok-tit { font: 800 24px/1.2 "Manrope", sans-serif; }
+  .demo-ok p:not(.demo-ok-tit) { color: var(--ink2); }
+  .demo-otra { margin-top: 8px; background: none; border: 0; color: var(--blue); font: 600 15px "Fira Sans", sans-serif; cursor: pointer; text-decoration: underline; }
+
+  /* Pie con el sello de MflowSuite */
+  footer { padding: 28px 0 40px; text-align: center; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--ink2); }
+  #hl-pw-scene { position: relative; display: inline-block; margin-top: .75rem; }
+  #hl-pw-row { display: inline-flex; align-items: center; font-family: "Fira Sans", sans-serif; font-size: 12px; font-weight: 600; white-space: nowrap; color: #475569; }
+  .hl-pw-by { color: #64748b; }
+  #hl-pw-slot { display: inline-block; width: 28px; height: 28px; margin: 0 5px; vertical-align: middle; flex-shrink: 0; }
+  #hl-pw-logo { position: absolute; top: 0; left: 0; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; pointer-events: none; }
+  #hl-pw-chars .pw-ch { display: inline-block; }
+  #hl-pw-logo.pw-glow { filter: drop-shadow(0 0 6px rgba(59, 130, 246, .9)); }
+  .hl-pw-wrap { text-align: center; padding: 12px 0 4px; }
+  .hl-pw-wrap a:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; border-radius: 8px; }
+
+  /* Aparecer al hacer scroll */
+  .fi { opacity: 0; transform: translateY(20px); transition: opacity .5s ease, transform .5s ease; }
+  .fi.vis { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .fi { opacity: 1; transform: none; transition: none; }
+    .escribe-punto, .escribiendo i, .msg.entra { animation: none; }
+  }
+  @media (max-width: 900px) {
+    .hero, .dos, .demo-grid { grid-template-columns: 1fr; }
+    .numeros { grid-template-columns: repeat(2, 1fr); }
+    .grilla, .pasos, .confia, .reloj { grid-template-columns: 1fr 1fr; }
+    .canales { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    section { padding: 54px 0; }
+    .wrap { padding: 0 16px; }
+    .nav a:not(.btn) { display: none; }
+    .grilla, .pasos, .confia, .reloj, .canales { grid-template-columns: 1fr; }
+    .numeros { gap: 12px; }
+    .num { padding: 16px; }
+    .num strong { font-size: 26px; }
+    .hero .btn { width: 100%; }
+    .demo-form, .demo-ok { padding: 24px 18px; border-radius: 22px; }
+    .demo-fila { grid-template-columns: 1fr; }
+    .demo-boton { width: 100%; }
+    .fila small { max-width: 150px; }
+    .tomar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="tilde" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.2.1.8-.1 1.4Z"/></symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+  <symbol id="i-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+  <symbol id="globo" viewBox="0 0 24 24"><path d="M6.5 4H17.5A4 4 0 0 1 21.5 8V13A4 4 0 0 1 17.5 17H11L6.5 20.6V17A4 4 0 0 1 2.5 13V8A4 4 0 0 1 6.5 4Z" fill="#fff" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round"/><circle cx="8" cy="10.5" r="1.55" fill="#2563EB"/><circle cx="12" cy="10.5" r="1.55" fill="#2563EB"/><circle cx="16" cy="10.5" r="1.55" fill="#FF5C28"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <a class="marca" href="#" aria-label="Respondelo, inicio">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6.5 4H17.5A4 4 0 0 1 21.5 8V13A4 4 0 0 1 17.5 17H11L6.5 20.6V17A4 4 0 0 1 2.5 13V8A4 4 0 0 1 6.5 4Z" fill="#fff" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round"/>
+        <circle class="escribe-punto" cx="8" cy="10.5" r="1.55" fill="#2563EB"/>
+        <circle class="escribe-punto d2" cx="12" cy="10.5" r="1.55" fill="#2563EB"/>
+        <circle class="escribe-punto d3" cx="16" cy="10.5" r="1.55" fill="#FF5C28"/>
+      </svg>
+      <span class="palabra">respondel<b>o</b></span>
+    </a>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#probalo">Probalo</a>
+      <a href="#que-hace">Qué hace</a>
+      <a href="#preguntas">Preguntas</a>
+      <a class="btn btn-1" href="#demo">Pedir una demo</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <span class="eyebrow">Atención con IA para tu negocio</span>
+        <h1>Que ningún cliente se quede <em>sin respuesta.</em></h1>
+        <p class="lead">Respondelo contesta por WhatsApp, Instagram y tu web en segundos, a cualquier hora, con lo que sabe tu negocio. Y cuando hace falta una persona, le pasa la charla a tu equipo.</p>
+        <div class="btns">
+          <a class="btn btn-1" href="#demo">Pedir una demo</a>
+          <a class="btn btn-2" href="#probalo">Probalo acá</a>
+        </div>
+        <div class="canales-mini" aria-label="Canales">
+          <span>WhatsApp</span><span>Instagram</span><span>Chat web</span><span>Correo</span><span>Llamadas</span>
+        </div>
+      </div>
+
+      <div class="tel" role="img" aria-label="Celular con una conversación de WhatsApp a las 23:47: la clienta pregunta si hacen envíos y el negocio le contesta en el mismo minuto">
+        <div class="pantalla">
+          <div class="chat-cab"><span class="av"><svg aria-hidden="true"><use href="#globo"/></svg></span><div><b>Estudio Lumi</b><small>en línea</small></div></div>
+          <div class="chat">
+            <p class="msg yo">Hola! ¿Hacen envíos a Rosario? Necesito el sérum para el sábado<time>23:47</time></p>
+            <p class="msg bot">¡Hola! Sí, enviamos a todo el país. A Rosario llega en 2 o 3 días hábiles, así que si lo pedís hoy te llega antes del sábado. ¿Te paso el link para comprarlo?<time>23:47</time></p>
+            <p class="msg yo">Sí, dale<time>23:48</time></p>
+            <span class="escribiendo" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+          <div class="chat-pie"><span>Mensaje</span><i><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5v6.6L15 12 3 13.9z"/></svg></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="numeros fi" aria-label="Respondelo en números">
+      <div class="num"><strong>24 h</strong><span>contesta todos los días, también de noche</span></div>
+      <div class="num"><strong>5</strong><span>canales en una sola bandeja</span></div>
+      <div class="num"><strong>1 toque</strong><span>para que tu equipo tome la charla</span></div>
+      <div class="num"><strong>100%</strong><span>tus datos, en un servidor propio</span></div>
+    </div>
+  </main>
+</div>
+
+<section class="banda perdes">
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Lo que pasa cuando nadie contesta</span>
+      <h2>El cliente que no recibe respuesta le escribe al siguiente</h2>
+      <p class="lead">Pregunta un precio a las once de la noche, un domingo o mientras tu equipo está atendiendo. Si la respuesta llega mañana, ya compró en otro lado. No se queja: simplemente no vuelve a escribir.</p>
+      <p class="lead remate">Respondelo contesta en el momento, con tus precios, tus horarios y tus reglas.</p>
+    </div>
+    <div class="reloj">
+      <div class="mal fi"><b>23:47</b><span>Te preguntan si hacen envíos. Tu local está cerrado.</span></div>
+      <div class="mal fi"><b>09:30</b><span>Lo ves al día siguiente y contestás. Ya compró en otra tienda.</span></div>
+      <div class="bien fi"><b>23:47 con Respondelo</b><span>Le contestó en el mismo minuto y le mandó el link para comprar.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="probalo">
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Probalo acá</span>
+      <h2>Hacele una pregunta como si fueras tu cliente</h2>
+      <p class="lead">Elegí un rubro y un canal, y tocá una pregunta. Así contesta Respondelo con lo que sabe el negocio.</p>
+    </div>
+    <div class="demo-grid">
+      <div>
+        <div class="control fi">
+          <h3>Rubro</h3>
+          <div class="chips" id="d-rubros" role="group" aria-label="Rubro"></div>
+        </div>
+        <div class="control fi">
+          <h3>Canal</h3>
+          <div class="chips" id="d-canales" role="group" aria-label="Canal">
+            <button class="chip" type="button" data-c="wa" aria-pressed="true">WhatsApp</button>
+            <button class="chip" type="button" data-c="ig" aria-pressed="false">Instagram</button>
+            <button class="chip" type="button" data-c="web" aria-pressed="false">Chat web</button>
+          </div>
+        </div>
+        <div class="control fi">
+          <h3>Preguntá</h3>
+          <div class="preguntas" id="d-preguntas"></div>
+          <button class="reiniciar" type="button" id="d-reiniciar">Empezar de nuevo</button>
+          <p class="que-paso" id="d-que-paso" aria-live="polite"></p>
+        </div>
+      </div>
+      <div class="tel fi" id="d-tel">
+        <div class="pantalla">
+          <div class="chat-cab"><span class="av"><span><svg aria-hidden="true"><use href="#globo"/></svg></span></span><div><b id="d-negocio">Estudio Lumi</b><small id="d-estado">en línea</small></div></div>
+          <div class="chat" id="d-chat" aria-live="polite"></div>
+          <div class="chat-pie"><span>Mensaje</span><i><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5v6.6L15 12 3 13.9z"/></svg></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="que-hace" class="banda">
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Qué hace</span>
+      <h2>Contesta como alguien que conoce tu negocio</h2>
+      <p class="lead">No es un menú de opciones ni un «presioná 1». Entiende lo que le escriben y contesta con tu información.</p>
+    </div>
+    <div class="grilla">
+      <article class="ben fi">
+        <div class="ico azul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
+        <h3>Sabe lo que sabe tu negocio</h3>
+        <p>Le cargás tus documentos, precios, servicios y preguntas frecuentes. Contesta con eso, y si no sabe algo, no lo inventa: le pasa la consulta a tu equipo.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>Te pasa la charla cuando hace falta</h3>
+        <p>Un reclamo, una venta grande, alguien que pide hablar con una persona: deriva la charla, le avisa a tu equipo al celular y se hace a un lado.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico verde"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg></div>
+        <h3>Entiende las notas de voz</h3>
+        <p>Si tu cliente manda un audio, lo escucha y contesta por escrito. Nadie tiene que pararse a escucharlo.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico azul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+        <h3>Da precios y arma el carrito</h3>
+        <p>Lee tu catálogo con precios y talles. Con Tienda Nube, además, dice dónde está un pedido y arma el carrito con el link de pago.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3>Horarios, sucursales y feriados</h3>
+        <p>Sabe qué sucursal abre hoy, a qué hora y cuál cierra por un feriado. Lo cambiás vos desde el panel, sin llamar a nadie.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico verde"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <h3>Anota quién es cada cliente</h3>
+        <p>Arma la ficha de cada persona mientras charla: qué busca, de qué zona es, qué le interesa. Después filtrás por eso y sabés a quién llamar.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico azul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
+        <h3>Envíos masivos por WhatsApp</h3>
+        <p>Mandá una promo a tu lista con las plantillas que aprueba Meta, de a uno y con pausas, respetando a los que se dieron de baja.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></div>
+        <h3>Aparta el spam</h3>
+        <p>Boletines, publicidad y respuestas automáticas no llegan al bot ni a tu equipo. Ante la duda, deja pasar el mensaje: un cliente real nunca se pierde.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico verde"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+        <h3>Conectado con tu tarjeta de beneficios</h3>
+        <p>Si usás <a href="https://recompensalo.com" target="_blank" rel="noopener">Recompensalo</a>, tu cliente pregunta cuántos puntos tiene y Respondelo le contesta con su tarjeta.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap dos">
+    <div class="fi">
+      <span class="eyebrow">Para tu equipo</span>
+      <h2>Una sola bandeja para todos los canales</h2>
+      <p class="lead">Tu equipo ve en tiempo real lo mismo que ve el bot y entra cuando quiere.</p>
+      <ul class="lista">
+        <li><svg aria-hidden="true"><use href="#tilde"/></svg><span>WhatsApp, Instagram, la web y el correo, en un mismo lugar.</span></li>
+        <li><svg aria-hidden="true"><use href="#tilde"/></svg><span>«Para hacer» junta solo las charlas que esperan una respuesta de una persona.</span></li>
+        <li><svg aria-hidden="true"><use href="#tilde"/></svg><span>Tocás «Tomar el control» y el bot se calla. Si contestás desde el celular, también.</span></li>
+        <li><svg aria-hidden="true"><use href="#tilde"/></svg><span>Cada persona del equipo ve solo lo que le toca.</span></li>
+      </ul>
+    </div>
+    <div class="bandeja fi" role="img" aria-label="Ejemplo de la bandeja: cuatro conversaciones de distintos canales, una esperando a una persona">
+      <div class="bandeja-cab"><span class="on">Para hacer · 1</span><span>Todas</span><span>Con el bot</span></div>
+      <div class="fila destacada"><span class="canal c-wa"><svg><use href="#i-wa"/></svg></span><div><b>Marina G.</b><small>«Me quemaron las cejas, quiero hablar con alguien»</small></div><span class="estado e-esp">Espera</span></div>
+      <div class="fila"><span class="canal c-ig"><svg><use href="#i-ig"/></svg></span><div><b>@flor.mdq</b><small>Le pasó el precio del lifting y las sucursales</small></div><span class="estado e-bot">Bot</span></div>
+      <div class="fila"><span class="canal c-web"><svg><use href="#i-web"/></svg></span><div><b>Visitante web</b><small>Preguntó si abren el feriado</small></div><span class="estado e-bot">Bot</span></div>
+      <div class="fila"><span class="canal c-mail"><svg><use href="#i-mail"/></svg></span><div><b>Lucas P.</b><small>Presupuesto para 12 personas</small></div><span class="estado e-hum">Lo atiende Sofi</span></div>
+      <div class="tomar"><span>Marina espera hace 2 minutos. Ya le llegó el aviso a la encargada.</span><b>Tomar el control</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="banda">
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Canales</span>
+      <h2>Donde ya te escriben tus clientes</h2>
+    </div>
+    <div class="canales">
+      <div class="canal-card fi"><span class="canal c-wa"><svg><use href="#i-wa"/></svg></span><b>WhatsApp</b><span>Con tu número de WhatsApp Business.</span></div>
+      <div class="canal-card fi"><span class="canal c-ig"><svg><use href="#i-ig"/></svg></span><b>Instagram</b><span>Los mensajes directos de tu cuenta.</span></div>
+      <div class="canal-card fi"><span class="canal c-web"><svg><use href="#i-web"/></svg></span><b>Chat web</b><span>Una burbuja en tu página, con tus colores.</span></div>
+      <div class="canal-card fi"><span class="canal c-mail"><svg><use href="#i-mail"/></svg></span><b>Correo</b><span>Lee y contesta los mails de tu casilla.</span></div>
+      <div class="canal-card fi"><span class="canal c-voz"><svg><use href="#i-tel"/></svg></span><b>Llamadas</b><span>Un agente de voz que atiende el teléfono.</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Tranquilidad</span>
+      <h2>Tu marca, tus datos, tus reglas</h2>
+    </div>
+    <div class="confia">
+      <article class="ben fi">
+        <div class="ico verde"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg></div>
+        <h3>Un servidor solo para tu negocio</h3>
+        <p>Tus conversaciones y tus clientes no se mezclan con los de nadie. Las notas y los datos sensibles se guardan cifrados.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico azul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3>No se sale de tema</h3>
+        <p>Atiende lo de tu negocio y nada más. Está blindado para que nadie le haga decir lo que no debe ni revelar cómo está configurado.</p>
+      </article>
+      <article class="ben fi">
+        <div class="ico coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+        <h3>Habla como tu negocio</h3>
+        <p>El tono, cuándo pasar a una persona y qué pedirle a cada cliente lo decidís vos. Lo afinamos juntos con conversaciones de prueba.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="preguntas" class="banda">
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Preguntas</span>
+      <h2>Lo que nos preguntan siempre</h2>
+    </div>
+    <div class="faq fi">
+      <details><summary>¿Va a inventar respuestas?</summary><p>Contesta con lo que le cargaste: tus documentos, tu catálogo, tus horarios. Si le preguntan algo que no está ahí, no lo inventa: le pasa la charla a una persona de tu equipo.</p></details>
+      <details><summary>¿Y si el cliente quiere hablar con una persona?</summary><p>Se la pasa. Le avisa a tu equipo al celular, la charla queda en «Para hacer» y el bot deja de contestar ahí. Vos decidís en qué casos deriva: reclamos, ventas grandes, lo que quieras.</p></details>
+      <details><summary>¿Tengo que cambiar mi número de WhatsApp?</summary><p>En general, no: se conecta tu mismo número de WhatsApp Business. Y si contestás desde el celular, el bot se da cuenta y se hace a un lado.</p></details>
+      <details><summary>¿Entiende audios?</summary><p>Sí. Si tu cliente manda una nota de voz, la entiende y le contesta por escrito.</p></details>
+      <details><summary>¿Dónde quedan mis datos?</summary><p>En un servidor solo para tu negocio. No se comparten con otros clientes, y los datos sensibles se guardan cifrados. Si algún día te vas, te los llevás.</p></details>
+      <details><summary>¿Cuánto cuesta?</summary><p>Depende de los canales y del volumen de mensajes. Pedí una demo y te armamos la propuesta para tu negocio.</p></details>
+    </div>
+  </div>
+</section>
+
+<section id="contacto">
+  <div class="wrap">
+    <div class="fi">
+      <span class="eyebrow">Cómo empezamos</span>
+      <h2>En tres pasos</h2>
+    </div>
+    <div class="pasos">
+      <div class="paso fi"><b>1</b><h3>Le enseñamos tu negocio</h3><p>Cargamos tus precios, servicios, horarios y preguntas frecuentes, y definimos con vos cuándo pasar la charla a una persona.</p></div>
+      <div class="paso fi"><b>2</b><h3>Lo probamos antes de abrirlo</h3><p>Primero charla en el chat web de prueba. Le hacemos las preguntas típicas de tu rubro hasta que contesta como querés.</p></div>
+      <div class="paso fi"><b>3</b><h3>Conectamos tus canales</h3><p>WhatsApp, Instagram, la web. Tu equipo empieza a usar la bandeja y nosotros seguimos afinándolo con vos.</p></div>
+    </div>
+
+    <div class="demo-f fi" id="demo">
+      <div>
+        <span class="eyebrow">Solicitar demo</span>
+        <h2>Miralo contestando por tu negocio</h2>
+        <p class="lead">Contanos qué hacés y por dónde te escriben. Te mostramos Respondelo contestando con tus datos en una llamada de 20 minutos. Sin compromiso.</p>
+      </div>
+      <form class="demo-form" id="demo-form" novalidate>
+        <div class="demo-fila">
+          <label class="campo"><span>Tu nombre</span><input name="nombre" required autocomplete="name" placeholder="Ana"></label>
+          <label class="campo"><span>Tu negocio</span><input name="negocio" required autocomplete="organization" placeholder="Estética, inmobiliaria, tienda online…"></label>
+        </div>
+        <div class="demo-fila">
+          <label class="campo"><span>WhatsApp</span><input name="whatsapp" required inputmode="tel" autocomplete="tel" placeholder="+54 9 11 …"></label>
+          <label class="campo"><span>Email</span><input name="email" required type="email" autocomplete="email" placeholder="vos@tunegocio.com"></label>
+        </div>
+        <label class="campo"><span>¿Por dónde te escriben hoy tus clientes? <em>(opcional)</em></span><textarea name="mensaje" rows="4" placeholder="Ej.: WhatsApp e Instagram, nos llegan unos 80 mensajes por día y a veces contestamos tarde."></textarea></label>
+        <div class="trampa" aria-hidden="true"><label>Sitio web <input name="empresa_web" tabindex="-1" autocomplete="off"></label></div>
+        <p class="demo-error" id="demo-error" role="alert" hidden></p>
+        <div class="demo-acciones">
+          <button class="btn btn-1 demo-boton" type="submit" id="demo-boton"><span>Solicitar demo</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+          <span class="demo-fino">Respondemos el mismo día, de lunes a viernes.</span>
+        </div>
+      </form>
+      <div class="demo-ok" id="demo-ok" role="status" hidden>
+        <span class="demo-ok-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <p class="demo-ok-tit">Listo. Te escribimos hoy.</p>
+        <p>Coordinamos por WhatsApp la demo con los datos de tu negocio.</p>
+        <button class="demo-otra" type="button" id="demo-otra">Enviar otro mensaje</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Respondelo es un producto de MflowSuite. ¿Tenés un comercio? Mirá también <a href="https://recompensalo.com" target="_blank" rel="noopener">Recompensalo</a>.</p>
+  <div class="hl-pw-wrap">
+    <a href="https://mflowsuite.com/" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;" aria-label="Powered by MflowSuite">
+      <div id="hl-pw-scene">
+        <div id="hl-pw-row" style="opacity:0;">
+          <span class="hl-pw-by">Powered by&nbsp;</span>
+          <span id="hl-pw-slot"></span>
+          <span id="hl-pw-chars"></span>
+        </div>
+        <img id="hl-pw-logo" src="https://reviews.mflowsuite.com/assets/mflowsuite-logo.png" alt="MflowSuite">
+      </div>
+    </a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var QUIETO = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* Aparecer al hacer scroll */
+  var els = document.querySelectorAll(".fi");
+  if (!("IntersectionObserver" in window) || QUIETO) {
+    els.forEach(function (el) { el.classList.add("vis"); });
+  } else {
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("vis"); obs.unobserve(e.target); } });
+    }, { threshold: 0.07 });
+    els.forEach(function (el) { obs.observe(el); });
+  }
+
+  /* ---------------- La demo de conversación ----------------
+     Cada pregunta: [lo que escribe el cliente, lo que contesta, qué mostró].
+     "audio" en vez de texto dibuja una nota de voz; "deriva" marca el pase a
+     una persona. Todo lo que contesta es algo que el producto hace de verdad. */
+  var RUBROS = {
+    estetica: { nombre: "Estética", negocio: "Estudio Lumi", preguntas: [
+      ["¿Cuánto sale el perfilado de cejas?", "El perfilado de cejas sale $ 12.000 y dura unos 30 minutos. Lo hacemos en las dos sucursales, Centro y Norte. ¿Querés que te pase los horarios?", "Sacó el precio del <b>catálogo</b> del negocio."],
+      ["¿Están abiertos hoy?", "Hoy la sucursal Centro abre de 10 a 20. La de Norte está cerrada por el feriado provincial y vuelve a abrir mañana a las 10.", "Leyó los <b>horarios y feriados</b> de cada sucursal, que el negocio cambia desde el panel."],
+      ["audio:0:12", "Te escuché: querés saber si hacemos lifting de pestañas. Sí, sale $ 18.000 y dura una hora. ¿Para qué sucursal te queda mejor?", "<b>Entendió la nota de voz</b> y contestó por escrito."],
+      ["Me quemaron las cejas, quiero hablar con alguien", "Lamento mucho lo que pasó. Ya le pasé tu mensaje a la encargada y te va a escribir ella en un rato.", "<b>Derivó la charla</b>: le avisó a la encargada al celular y el bot dejó de contestar.", "deriva"]
+    ] },
+    inmobiliaria: { nombre: "Inmobiliaria", negocio: "Puerta Propiedades", preguntas: [
+      ["¿Tienen 2 ambientes en alquiler en Palermo?", "Sí, tengo tres: Gorriti al 4500 ($ 650.000), Honduras al 5100 ($ 720.000) y Soler al 3900 ($ 610.000). ¿Te mando las fotos de alguno?", "Buscó en las <b>propiedades cargadas</b> por zona, tipo y operación."],
+      ["Pasame las fotos del de Gorriti", "Acá tenés las fotos del de Gorriti: 48 m², balcón al frente y apto profesional.\npuertapropiedades.com.ar/galeria/gorriti", "Mandó la <b>galería</b> de la propiedad con un link."],
+      ["¿Qué piden para alquilar?", "Pedimos garantía propietaria o seguro de caución, y recibos de sueldo de los últimos tres meses. ¿Tenés alguna de las dos garantías?", "Contestó los <b>requisitos</b> que el negocio cargó para esa propiedad."],
+      ["Quiero visitarlo el sábado", "¡Genial! Te paso con Laura, que coordina las visitas. Ya sabe que buscás el de Gorriti y que tenés seguro de caución.", "<b>Derivó la charla</b> con lo que ya averiguó anotado en la ficha del cliente.", "deriva"]
+    ] },
+    tienda: { nombre: "Tienda online", negocio: "Algodón Store", preguntas: [
+      ["¿Tienen la remera negra en talle M?", "Sí, la Remera Básica negra está en talle M y sale $ 25.000. ¿Te armo el carrito?", "Revisó <b>stock, talles y precio</b> en la tienda."],
+      ["Sí, armalo", "Listo, acá está tu carrito con el link de pago. Lo pagás en la tienda y te llega a tu casa:\nalgodonstore.com/checkout/…", "<b>Armó el carrito</b> en Tienda Nube con el link para pagar."],
+      ["¿Dónde está mi pedido 1043?", "Tu pedido 1043 salió ayer por correo. Lo podés seguir con el código que te llegó por mail; tendría que llegarte en 2 o 3 días hábiles.", "Consultó el <b>estado del pedido</b> en la tienda."],
+      ["La remera me vino fallada", "Uy, perdón. Te paso con alguien del equipo para gestionar el cambio sin costo.", "<b>Derivó la charla</b>: los reclamos van a una persona.", "deriva"]
+    ] },
+    gastronomia: { nombre: "Gastronomía", negocio: "Café Molino", preguntas: [
+      ["¿Tienen opciones sin TACC?", "Sí: tenemos tostados en pan sin TACC, budín de limón y alfajores certificados. Se preparan aparte.", "Contestó con la <b>carta</b> que cargó el negocio."],
+      ["¿Hasta qué hora están hoy?", "Hoy estamos abiertos hasta las 21. Mañana abrimos a las 8.", "Leyó los <b>horarios</b> del día."],
+      ["¿Cuántos sellos tengo?", "Tenés 3 de 5 sellos. Te faltan 2 para tu café de regalo. Acá está tu tarjeta:\nrecompensalo.com/…", "Consultó la <b>tarjeta de beneficios</b> en Recompensalo."],
+      ["Quiero reservar para 8 personas el viernes", "¡Qué lindo! Para grupos de 8 te confirma la mesa alguien del equipo. Ya le pasé tu pedido.", "<b>Derivó la charla</b>: las reservas grandes las confirma una persona.", "deriva"]
+    ] }
+  };
+  var rubro = "estetica", canal = "wa", ocupado = false;
+  var chat = $("d-chat"), tel = $("d-tel");
+  function hora() { var d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+  function burbuja(clase, html) {
+    var p = document.createElement("p"); p.className = "msg " + clase + (QUIETO ? "" : " entra");
+    p.innerHTML = html + "<time>" + hora() + "</time>";
+    chat.appendChild(p); chat.scrollTop = chat.scrollHeight; return p;
+  }
+  function texto(t) {
+    return t.replace(/[&<>]/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]; })
+      .replace(/\n(\S+\/\S*)/g, '<br><a href="#" onclick="return false">$1</a>');
+  }
+  function pintarRubros() {
+    $("d-rubros").innerHTML = Object.keys(RUBROS).map(function (k) {
+      return "<button class='chip' type='button' data-r='" + k + "' aria-pressed='" + (k === rubro) + "'>" + RUBROS[k].nombre + "</button>";
+    }).join("");
+  }
+  function empezar() {
+    chat.innerHTML = "<p class='sistema pista'>Tocá una pregunta para escribirle al negocio</p>"; ocupado = false;
+    $("d-negocio").textContent = RUBROS[rubro].negocio;
+    $("d-estado").textContent = "en línea";
+    $("d-que-paso").innerHTML = "";
+    $("d-preguntas").innerHTML = RUBROS[rubro].preguntas.map(function (q, i) {
+      var etiqueta = q[0].indexOf("audio:") === 0 ? "Nota de voz (" + q[0].slice(6) + ")" : q[0];
+      return "<button class='pregunta' type='button' data-i='" + i + "'><span>" + etiqueta + "</span>" + (q[3] ? "<small>pasa a una persona</small>" : "") + "</button>";
+    }).join("");
+  }
+  function preguntar(i, boton) {
+    if (ocupado) return;
+    var q = RUBROS[rubro].preguntas[i]; ocupado = true; boton.disabled = true;
+    var pista = chat.querySelector(".pista"); if (pista) pista.remove();
+    if (q[0].indexOf("audio:") === 0) {
+      burbuja("yo", "<span class='audio'><span class='play'><svg viewBox='0 0 24 24' fill='currentColor'><path d='M7 4v16l13-8z'/></svg></span><span class='onda'></span><small>" + q[0].slice(6) + "</small></span>");
+    } else burbuja("yo", texto(q[0]));
+    var dots = document.createElement("span"); dots.className = "escribiendo"; dots.innerHTML = "<i></i><i></i><i></i>";
+    setTimeout(function () {
+      chat.appendChild(dots); chat.scrollTop = chat.scrollHeight;
+      $("d-estado").textContent = "escribiendo…";
+    }, QUIETO ? 0 : 350);
+    setTimeout(function () {
+      dots.remove(); $("d-estado").textContent = "en línea";
+      burbuja("bot", texto(q[1]));
+      if (q[3]) {
+        var s = document.createElement("p"); s.className = "sistema"; s.textContent = "Charla derivada a una persona · le llegó el aviso al celular";
+        chat.appendChild(s); chat.scrollTop = chat.scrollHeight;
+      }
+      $("d-que-paso").innerHTML = q[2];
+      ocupado = false;
+    }, QUIETO ? 0 : 1500);
+  }
+  $("d-rubros").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    rubro = b.dataset.r; pintarRubros(); empezar();
+  });
+  $("d-canales").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    canal = b.dataset.c;
+    [].forEach.call($("d-canales").children, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+    tel.classList.remove("ig", "web"); if (canal !== "wa") tel.classList.add(canal);
+  });
+  $("d-preguntas").addEventListener("click", function (e) {
+    var b = e.target.closest(".pregunta"); if (b && !b.disabled) preguntar(+b.dataset.i, b);
+  });
+  $("d-reiniciar").addEventListener("click", empezar);
+  pintarRubros(); empezar();
+
+  /* ---------------- El formulario de demo ----------------
+     Va al Worker respondelo-contacto (carpeta worker/): la web es estática y
+     no tiene dónde recibir nada. Ver FORMULARIO.md de recompensalo-web. */
+  var URL_CONTACTO = "https://respondelo-contacto.mflowsuite.workers.dev/api/contacto";
+  var f = $("demo-form"), err = $("demo-error"), boton = $("demo-boton"), ok = $("demo-ok");
+  function fallo(msg, campo) {
+    err.textContent = msg; err.hidden = false;
+    if (campo && f.elements[campo]) { f.elements[campo].classList.add("mal"); f.elements[campo].focus(); }
+  }
+  f.addEventListener("input", function (e) { e.target.classList.remove("mal"); });
+  f.addEventListener("submit", function (e) {
+    e.preventDefault();
+    err.hidden = true;
+    [].forEach.call(f.querySelectorAll(".mal"), function (x) { x.classList.remove("mal"); });
+    var nombres = { nombre: "tu nombre", negocio: "el nombre de tu negocio", whatsapp: "tu WhatsApp", email: "tu email" };
+    var falta = Object.keys(nombres).filter(function (n) { return !f.elements[n].value.trim(); })[0];
+    if (falta) return fallo("Completá " + nombres[falta] + ".", falta);
+    var datos = {};
+    new FormData(f).forEach(function (v, k) { datos[k] = v; });
+    var t = boton.querySelector("span");
+    boton.disabled = true; t.textContent = "Enviando…";
+    fetch(URL_CONTACTO, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(datos) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) { return { r: r, b: b }; }); })
+      .then(function (x) {
+        if (!x.r.ok) return fallo(x.b.error || "No se pudo enviar. Probá de nuevo.", x.b.campo);
+        f.reset(); f.hidden = true; ok.hidden = false;
+      })
+      .catch(function () { fallo("Sin conexión. Probá de nuevo en un momento."); })
+      .then(function () { boton.disabled = false; t.textContent = "Solicitar demo"; });
+  });
+  $("demo-otra").addEventListener("click", function () { ok.hidden = true; f.hidden = false; });
+})();
+</script>
+<script>
+  // «Powered by MflowSuite»: el logo salta letra por letra (versión para fondo claro).
+  setTimeout(function () {
+    var BRAND = "MflowSuite", LS = 28, HD = 290, FHD = 680, SQD = 480, LSQ = 500, ID = 650, THR = 0.2;
+    var TXT = "#475569", LUZ = "#2563eb";
+    var scene = document.getElementById("hl-pw-scene"), row = document.getElementById("hl-pw-row"),
+        charsEl = document.getElementById("hl-pw-chars"), slotEl = document.getElementById("hl-pw-slot"),
+        logo = document.getElementById("hl-pw-logo");
+    if (!scene || !row || !charsEl || !slotEl || !logo) return;
+    var spans = [];
+    for (var i = 0; i < BRAND.length; i++) {
+      var s = document.createElement("span"); s.className = "pw-ch"; s.textContent = BRAND[i];
+      s.style.color = TXT; s.style.fontWeight = "600"; charsEl.appendChild(s); spans.push(s);
+    }
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      row.style.opacity = "1";
+      var sr0 = scene.getBoundingClientRect(), sl0 = slotEl.getBoundingClientRect();
+      logo.style.transform = "translate(" + (sl0.left - sr0.left) + "px," + (sl0.top - sr0.top) + "px)";
+      return;
+    }
+    var lerp = function (a, b, t) { return a + (b - a) * t; };
+    var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+    var arc = function (t, h) { return 4 * h * t * (1 - t); };
+    function spring(t) {
+      if (t < .15) { var r = t / .15; return [lerp(1, 1.35, r), lerp(1, .55, r)]; }
+      if (t < .40) { var r = (t - .15) / .25; return [lerp(1.35, .88, r), lerp(.55, 1.22, r)]; }
+      if (t < .70) { var r = (t - .40) / .30; return [lerp(.88, 1.04, r), lerp(1.22, .96, r)]; }
+      var r = (t - .70) / .30; return [lerp(1.04, 1, r), lerp(.96, 1, r)];
+    }
+    function air(t) {
+      if (t < .45) return [lerp(1, .84, t / .45), lerp(1, 1.2, t / .45)];
+      if (t < .82) return [.84, 1.2];
+      var r = (t - .82) / .18; return [lerp(.84, 1.28, r), lerp(1.2, .68, r)];
+    }
+    function ctr(el) { var er = el.getBoundingClientRect(), sr = scene.getBoundingClientRect(); return { x: er.left - sr.left + er.width / 2, y: er.top - sr.top + er.height / 2 }; }
+    function mv(cx, cy, sx, sy, rot, a) { logo.style.transform = "translate(" + (cx - LS / 2) + "px," + (cy - LS / 2) + "px) rotate(" + rot + "rad) scale(" + sx + "," + sy + ")"; logo.style.opacity = a; }
+    var phase = "intro", t0 = null, idx = 0, hop = null, lpos = [], spos = null;
+    var lsq = spans.map(function () { return { at: -1 }; }), lsqAt = -1, lsX = 1, lsY = 1;
+    function uLS(now) {
+      for (var i = 0; i < spans.length; i++) {
+        if (lsq[i].at < 0) continue;
+        var t = clamp((now - lsq[i].at) / SQD, 0, 1), res = spring(t);
+        spans[i].style.transform = "scaleX(" + res[0] + ") scaleY(" + res[1] + ")";
+        spans[i].style.color = t < .28 ? LUZ : TXT;
+        if (t >= 1) { lsq[i].at = -1; spans[i].style.transform = ""; spans[i].style.color = TXT; }
+      }
+    }
+    function uLogo(now) { if (lsqAt < 0) return; var t = clamp((now - lsqAt) / LSQ, 0, 1), res = spring(t); lsX = res[0]; lsY = res[1]; if (t >= 1) { lsqAt = -1; lsX = lsY = 1; } }
+    function tLogo(now) { lsqAt = now; lsX = 1.3; lsY = 0.62; }
+    function sh(from, to, h, dur, now) { hop = { from: { x: from.x, y: from.y }, to: { x: to.x, y: to.y }, h: h, dur: dur, t0: now }; }
+    function frame(now) {
+      if (!t0) t0 = now;
+      uLS(now); uLogo(now);
+      if (phase === "intro") {
+        var t = clamp((now - t0) / ID, 0, 1); row.style.opacity = t; mv(-200, 0, 1, 1, 0, 0);
+        if (t >= 1) { lpos = spans.map(ctr); spos = ctr(slotEl); var li = spans.length - 1; phase = "hop"; idx = li; t0 = now; sh({ x: lpos[li].x + 55, y: spos.y }, { x: lpos[li].x, y: spos.y }, 40, HD, now); }
+      } else if (phase === "hop" || phase === "final") {
+        if (hop) {
+          var ht = clamp((now - hop.t0) / hop.dur, 0, 1);
+          var lx = lerp(hop.from.x, hop.to.x, ht), ly = lerp(hop.from.y, hop.to.y, ht) - arc(ht, hop.h);
+          var rot = (ht < 0.5 ? 1 : -1) * Math.sin(Math.PI * ht) * (phase === "hop" ? 0.22 : 0.18);
+          var sh2 = lsqAt >= 0 ? [lsX, lsY] : air(ht);
+          mv(lx, ly, sh2[0], sh2[1], rot, 1);
+          if (ht >= 1) {
+            if (phase === "hop") {
+              lsq[idx].at = now; tLogo(now); var fx = hop.to.x, fy = hop.to.y; idx--;
+              if (idx >= 0) { sh({ x: fx, y: fy }, { x: lpos[idx].x, y: spos.y }, 40, HD, now); }
+              else { phase = "final"; t0 = now; sh({ x: fx, y: fy }, { x: spos.x, y: spos.y }, 70, FHD, now); }
+            } else { phase = "done"; tLogo(now); mv(spos.x, spos.y, lsX, lsY, 0, 1); logo.classList.add("pw-glow"); }
+          }
+        }
+      } else if (phase === "done") { mv(spos.x, spos.y, lsX, lsY, 0, 1); if (lsqAt < 0) return; }
+      requestAnimationFrame(frame);
+    }
+    var started = false;
+    function start() { if (started) return; started = true; row.style.opacity = "0"; mv(-200, 0, 1, 1, 0, 0); requestAnimationFrame(frame); }
+    function init() { var obs = new IntersectionObserver(function (entries) { entries.forEach(function (e) { if (e.isIntersecting) { start(); obs.disconnect(); } }); }, { threshold: THR }); obs.observe(scene); }
+    if (logo.complete) { init(); } else { logo.onload = init; logo.onerror = init; setTimeout(init, 400); }
+  }, 100);
+</script>
+</body>
+</html>
